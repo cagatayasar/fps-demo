@@ -27,6 +27,10 @@
     <ClCompile Include="src\stb_image.cpp" />
     <ClCompile Include="src\tutorial6_camera\main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\basic.frag" />
+    <None Include="shaders\basic.vert" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{B2752E81-6C84-4E16-9296-302E9533CD4E}</ProjectGuid>
