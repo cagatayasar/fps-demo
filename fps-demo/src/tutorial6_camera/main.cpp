@@ -13,6 +13,7 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void process_input(GLFWwindow* window);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
@@ -27,7 +28,7 @@ const unsigned int SCREEN_WIDTH = 1600;
 const unsigned int SCREEN_HEIGHT = 900;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 2.0f, 7.0f));
 float lastX = SCREEN_WIDTH / 2.0f;
 float lastY = SCREEN_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -52,6 +53,7 @@ int main()
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetKeyCallback(window, key_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 
@@ -71,35 +73,35 @@ int main()
 	Shader basicShader((shaderPath + "basic.vert").c_str(), (shaderPath + "basic.frag").c_str());
 
 	float floorVertices[] = {
-		 0.0f, 0.0f,  0.0f, 0.0f, 0.0f,
-		20.0f, 0.0f,  0.0f, 5.0f, 0.0f,
-		20.0f, 0.0f, 20.0f, 5.0f, 5.0f,
-		20.0f, 0.0f, 20.0f, 5.0f, 5.0f,
-		 0.0f, 0.0f, 20.0f, 0.0f, 5.0f,
-		 0.0f, 0.0f,  0.0f, 0.0f, 0.0f
+		-10.0f, 0.0f, -10.0f, 0.0f, 0.0f,
+		 10.0f, 0.0f, -10.0f, 5.0f, 0.0f,
+		 10.0f, 0.0f,  10.0f, 5.0f, 5.0f,
+		 10.0f, 0.0f,  10.0f, 5.0f, 5.0f,
+		-10.0f, 0.0f,  10.0f, 0.0f, 5.0f,
+		-10.0f, 0.0f, -10.0f, 0.0f, 0.0f
 	};
-	glm::vec3 floorPosition = glm::vec3(-10.0f, -2.0f, -10.0f);
+	glm::vec3 floorPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	float wallVertices[] = {
-		 0.0f,  0.0f,  0.0f, 0.0f, 0.0f,
-		20.0f,  0.0f,  0.0f, 5.0f, 0.0f,
-		20.0f,  4.0f,  0.0f, 5.0f, 1.0f,
-		20.0f,  4.0f,  0.0f, 5.0f, 1.0f,
-		 0.0f,  4.0f,  0.0f, 0.0f, 1.0f,
-		 0.0f,  0.0f,  0.0f, 0.0f, 0.0f
+		-10.0f,  0.0f,  0.0f, 0.0f, 0.0f,
+		 10.0f,  0.0f,  0.0f, 5.0f, 0.0f,
+		 10.0f,  4.0f,  0.0f, 5.0f, 1.0f,
+		 10.0f,  4.0f,  0.0f, 5.0f, 1.0f,
+		-10.0f,  4.0f,  0.0f, 0.0f, 1.0f,
+		-10.0f,  0.0f,  0.0f, 0.0f, 0.0f
 	};
 
 	glm::vec3 wallPositions[] = {
-		glm::vec3(-10.0f, -2.0f,  10.0f),
-		glm::vec3( 10.0f, -2.0f,  10.0f),
-		glm::vec3( 10.0f, -2.0f, -10.0f),
-		glm::vec3(-10.0f, -2.0f, -10.0f),
+		glm::vec3(  0.0f, 0.0f, -10.0f),
+		glm::vec3( 10.0f, 0.0f,   0.0f),
+		glm::vec3(  0.0f, 0.0f,  10.0f),
+		glm::vec3(-10.0f, 0.0f,   0.0f)
 	};
 	WallRotation wallRotations[4];
-	wallRotations[0].angle =   0.0f;
-	wallRotations[1].angle =  90.0f;
-	wallRotations[2].angle = 180.0f;
-	wallRotations[3].angle = 270.0f;
+	wallRotations[0].angle =    0.0f;
+	wallRotations[1].angle =   90.0f;
+	wallRotations[2].angle =  180.0f;
+	wallRotations[3].angle =  270.0f;
 	wallRotations[0].rotationVector = glm::vec3(0.0f, 1.0f, 0.0f);
 	wallRotations[1].rotationVector = glm::vec3(0.0f, 1.0f, 0.0f);
 	wallRotations[2].rotationVector = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -177,8 +179,10 @@ int main()
 		lastFrame = currentFrame;
 
 		process_input(window);
+		camera.Update(deltaTime);
 
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glm::vec3 rgb = glm::vec3(217.0f, 234.0f, 250.0f);
+		glClearColor((rgb.r + 1.0f) / 256.0f, (rgb.g + 1.0f) / 256.0f, (rgb.b + 1.0f) / 256.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// rectangle drawing
@@ -268,7 +272,25 @@ void process_input(GLFWwindow* window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+	/*if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+		theAngle -= 0.5f;
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+		theAngle += 0.5f;*/
 	//translate_input
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS)
+		camera.SetSprint(true);
+	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE)
+		camera.SetSprint(false);
+	if (key == GLFW_KEY_RIGHT_SHIFT && action == GLFW_PRESS)
+		camera.SetSprint(true);
+	if (key == GLFW_KEY_RIGHT_SHIFT && action == GLFW_RELEASE)
+		camera.SetSprint(false);
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+		camera.Jump();
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)

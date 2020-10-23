@@ -15,11 +15,24 @@ enum Camera_Movement {
 	RIGHT
 };
 
-const float YAW         = -90.0f;
-const float PITCH       =  0.0f;
-const float SPEED       =  7.0f;
-const float SENSITIVITY =  0.1f;
-const float ZOOM        =  45.0f;
+const float YAW            = -90.0f;
+const float PITCH          =   0.0f;
+const float MOVEMENT_SPEED =   7.0f;
+const float SPRINT_SPEED   =  14.0f;
+const float SENSITIVITY    =   0.05f;
+const float ZOOM           =  45.0f;
+
+const float BOUNDARY_X1 = -8.5f;
+const float BOUNDARY_X2 =  8.5f;
+const float BOUNDARY_Z1 = -8.5f;
+const float BOUNDARY_Z2 =  8.5f;
+
+const float GRAVITY = 14.0f;
+const float JUMP_INITIAL_VELOCITY = 7.0f;
+
+bool sprintEnabled = false;
+bool isInAir = false;
+float yVelocity = 0.0f;
 
 class Camera
 {
@@ -35,6 +48,7 @@ public:
 	float Pitch;
 	// camera options
 	float MovementSpeed;
+	float SprintSpeed;
 	float MouseSensitivity;
 	float Zoom;
 
@@ -46,7 +60,8 @@ public:
 		float pitch = PITCH)
 		:
 		Front(glm::vec3(0.0f, 0.0f, -1.0f)),
-		MovementSpeed(SPEED),
+		MovementSpeed(MOVEMENT_SPEED),
+		SprintSpeed(SPRINT_SPEED),
 		MouseSensitivity(SENSITIVITY),
 		Zoom(ZOOM)
 	{
@@ -63,7 +78,8 @@ public:
 		float yaw, float pitch)
 		:
 		Front(glm::vec3(0.0f, 0.0f, -1.0f)),
-		MovementSpeed(SPEED),
+		MovementSpeed(MOVEMENT_SPEED),
+		SprintSpeed(SPRINT_SPEED),
 		MouseSensitivity(SENSITIVITY),
 		Zoom(ZOOM)
 	{
@@ -80,10 +96,45 @@ public:
 		return calculate_lookAt_matrix(Position, Position + Front, Up);
 	}
 
+	void SetSprint(bool isTrue)
+	{	
+		sprintEnabled = isTrue;
+	}
+
+	void Jump()
+	{
+		if (!isInAir)
+		{
+			isInAir = true;
+			yVelocity = JUMP_INITIAL_VELOCITY;
+			//std::cout << "Camera.Jump()" << std::endl;
+		}
+	}
+	
+	void Update(float deltaTime)
+	{
+		if (isInAir)
+		{
+			//std::cout << "Camera.Update() isInAir==true" << std::endl;
+			Position.y += yVelocity * deltaTime;
+			yVelocity -= GRAVITY * deltaTime;
+		}
+		if (Position.y < 2.0f) //@Change make variable for this in player class
+		{
+			Position.y = 2.0f;
+			isInAir = false;
+		}
+	}
+
 	// processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
 	void ProcessKeyboard(Camera_Movement direction, float deltaTime)
 	{
-		float velocity = MovementSpeed * deltaTime;
+		float velocity;
+		if (sprintEnabled)
+			velocity = SprintSpeed * deltaTime;
+		else
+			velocity = MovementSpeed * deltaTime;
+
 		if (direction == FORWARD)
 			Position += GetXZDirection(Front) * velocity;
 		if (direction == BACKWARD)
@@ -92,6 +143,17 @@ public:
 			Position -= GetXZDirection(Right) * velocity;
 		if (direction == RIGHT)
 			Position += GetXZDirection(Right) * velocity;
+
+
+		// Check boundaries
+		if (Position.x < BOUNDARY_X1)
+			Position.x = BOUNDARY_X1;
+		if (Position.x > BOUNDARY_X2)
+			Position.x = BOUNDARY_X2;
+		if (Position.z < BOUNDARY_Z1)
+			Position.z = BOUNDARY_Z1;
+		if (Position.z > BOUNDARY_Z2)
+			Position.z = BOUNDARY_Z2;
 	}
 
 	glm::vec3 GetXZDirection(glm::vec3 front)
